@@ -129,3 +129,111 @@ public class ArrayList<E> extends AbstractList<E>
 ```
 
 ## 扩容
+什么情况下会扩容：  
+1. `ensureCapacity(int minCapacity)`  
+2. `add(E e)`和`add(int index, E element)`  
+3. `addAll(Collection<? extends E> c)`和`addAll(int index, Collection<? extends E> c)`。  
+  
+扩容
+```
+    private Object[] grow() {
+        return grow(size + 1);
+    }
+```
+```
+    private Object[] grow(int minCapacity) {
+        return elementData = Arrays.copyOf(elementData, newCapacity(minCapacity));
+    }
+```
+主要是`newCapacity(minCapacity)`如何计算新的容量，根据初始化为elementData赋值不同，扩容后的容量会不同
+```
+    private int newCapacity(int minCapacity) {
+        // overflow-conscious code
+        //数组原来的容量
+        int oldCapacity = elementData.length;
+        //新的容量大约是原来的1.5倍 
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        //如果新容量小于等于minCapacity
+        //如果oldCapacity = 0, 有minCapacity = 1, newCapacity = 0
+        //如果oldCapacity = 1, 有minCapacity = 2, newCapacity = 1
+        //如果oldCapacity = 2, 有minCapacity = 3, newCapacity = 3
+        //如果oldCapacity = 3, 有minCapacity = 4, newCapacity = 4
+        
+        //如果oldCapacity = 4, 有minCapacity = 5, newCapacity = 6，不会进入这个if
+        if (newCapacity - minCapacity <= 0) {
+            //如果是默认构造函数指定的elementData，则第一次扩容时会扩容到DEFAULT_CAPACITY = 10
+            //否则仅仅会扩容到 minCapacity
+            if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA)
+                return Math.max(DEFAULT_CAPACITY, minCapacity);
+            if (minCapacity < 0) // overflow
+                throw new OutOfMemoryError();
+            return minCapacity;
+        }
+        
+        return (newCapacity - MAX_ARRAY_SIZE <= 0)
+            ? newCapacity
+            : hugeCapacity(minCapacity);
+    }
+```
+
+## 其他
+数组赋值时大量调用了`Arrays.copyOf`和`System.arraycopy`两个方法。`Arrays.copyOf`重载了很多方法，最终调用的都是本地调用`System.arraycopy`。
+### `System.arraycopy`
+复制的长度为`length`，从源数组`src`的`srcPos`开始复制，复制到`dest`的`destPos`。
+```
+    public static native void arraycopy(Object src,  int  srcPos,
+                                        Object dest, int destPos,
+                                        int length);
+```
+### `Arrays.copyOf`
+直接调用`System.arraycopy`复制整个数组到新的数组中，返回新数组的引用，以`int`型为例
+```
+    public static int[] copyOf(int[] original, int newLength) {
+        int[] copy = new int[newLength];
+        System.arraycopy(original, 0, copy, 0,
+                         Math.min(original.length, newLength));
+        return copy;
+    }
+```
+支持基本类型和泛型。对基本类型的支持
+```
+copyOf(byte[], int)
+copyOf(short[], int)
+copyOf(int[], int)
+copyOf(long[], int)
+copyOf(char[], int)
+copyOf(float[], int)
+copyOf(double[], int)
+copyOf(boolean[], int)
+```
+对泛型的支持
+```
+    @SuppressWarnings("unchecked")
+    public static <T> T[] copyOf(T[] original, int newLength) {
+        return (T[]) copyOf(original, newLength, original.getClass());
+    }
+```
+```
+    public static <T,U> T[] copyOf(U[] original, int newLength, Class<? extends T[]> newType) {
+        @SuppressWarnings("unchecked")
+        T[] copy = ((Object)newType == (Object)Object[].class)
+            ? (T[]) new Object[newLength]
+            : (T[]) Array.newInstance(newType.getComponentType(), newLength);
+        System.arraycopy(original, 0, copy, 0,
+                         Math.min(original.length, newLength));
+        return copy;
+    }
+```
+只复制一段数组
+```
+copyOfRange(T[], int, int)
+copyOfRange(U[], int, int, Class<? extends T[]>)
+copyOfRange(byte[], int, int)
+copyOfRange(short[], int, int)
+copyOfRange(int[], int, int)
+copyOfRange(long[], int, int)
+copyOfRange(char[], int, int)
+copyOfRange(float[], int, int)
+copyOfRange(double[], int, int)
+copyOfRange(boolean[], int, int)
+```
