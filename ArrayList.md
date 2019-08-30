@@ -175,17 +175,43 @@ public class ArrayList<E> extends AbstractList<E>
             : hugeCapacity(minCapacity);
     }
 ```
+## 迭代器
+`ArrayList`提供了`iterator()`和`listIterator()`，都是`ArrayList`的内部类。
+```
+    private class Itr implements Iterator<E>
+```
+```
+private class ListItr extends Itr implements ListIterator<E>
+```
+`Iterator`接口有三个主要方法，在迭代过程中要删除元素智能调用迭代器的`remove`方法，否则会抛出异常。
+```
+boolean hasNext()
+E next()
+void remove()
+```
+`ListIterator`扩展了`Iterator`类，提供了向前向后迭代的方法，并且能够在当前位置增加元素或者修改当前元素。
+```
+boolean hasPrevious()
+int nextIndex()
+int previousIndex()
+E previous()
+void set(E)
+void add(E)
+```
+
+
+
 
 ## 其他
 数组赋值时大量调用了`Arrays.copyOf`和`System.arraycopy`两个方法。`Arrays.copyOf`重载了很多方法，最终调用的都是本地调用`System.arraycopy`。
-### `System.arraycopy`
+### System.arraycopy
 复制的长度为`length`，从源数组`src`的`srcPos`开始复制，复制到`dest`的`destPos`。
 ```
     public static native void arraycopy(Object src,  int  srcPos,
                                         Object dest, int destPos,
                                         int length);
 ```
-### `Arrays.copyOf`
+### Arrays.copyOf
 直接调用`System.arraycopy`复制整个数组到新的数组中，返回新数组的引用，以`int`型为例
 ```
     public static int[] copyOf(int[] original, int newLength) {
