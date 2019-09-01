@@ -1,12 +1,12 @@
 # ArrayList
 ArrayList实现了`List<E>, RandomAccess, Cloneable, java.io.Serializable`接口，除`List<E>`接口外都是标记接口，`RandomAccess`接口表示可以随机访问，`Cloneable`表示可以克隆，`Serializable`接口表示可以序列化。
-```
+```java
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 ```
 
 ## 几个关键属性
-```
+```java
     //默认容量为10
     private static final int DEFAULT_CAPACITY = 10;
     //两个空数组，区别两种情况
@@ -21,13 +21,13 @@ public class ArrayList<E> extends AbstractList<E>
 ```
 ## 构造函数
 默认构造函数`ArrayList()`，带初始容量的构造函数`ArrayList(int initialCapacity)`，使用一个集合来构造`ArrayList(Collection<? extends E> c)`。默认构造函数将`elementData`初始化为`DEFAULTCAPACITY_EMPTY_ELEMENTDATA`，另外两个，当指定的容量不为0或者集合不为空，则会分配内存，如果指定的容量为0或者集合为空，则将`elementData`初始化为`EMPTY_ELEMENTDATA`，两者在扩容时有不同。
-```
+```java
     //默认构造函数
     public ArrayList() {
         this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
     }
 ```
-```
+```java
     //指定初始化容量
     public ArrayList(int initialCapacity) {
         if (initialCapacity > 0) {
@@ -40,7 +40,7 @@ public class ArrayList<E> extends AbstractList<E>
         }
     }
 ```
-```
+```java
     //使用集合来构造
     public ArrayList(Collection<? extends E> c) {
         elementData = c.toArray();
@@ -58,7 +58,7 @@ public class ArrayList<E> extends AbstractList<E>
 
 ## add
 `add(E e)`调用了`add(E e, Object[] elementData, int s)`方法在数组最后插入，如果当前数组已经写满则扩容`grow()`。`add(int index, E e)`在`index`处插入元素，首先检查是否需要扩容，然后`index`之后的元素每个往后移动，最后将`e`放在`index`位置。
-```
+```java
     private void add(E e, Object[] elementData, int s) {
         if (s == elementData.length)
             elementData = grow();
@@ -66,14 +66,14 @@ public class ArrayList<E> extends AbstractList<E>
         size = s + 1;
     }
 ```
-```
+```java
     public boolean add(E e) {
         modCount++;
         add(e, elementData, size);
         return true;
     }
 ```
-```
+```java
     public void add(int index, E element) {
         rangeCheckForAdd(index);
         modCount++;
@@ -89,7 +89,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 ```
 ## get
-```
+```java
     public E get(int index) {
         Objects.checkIndex(index, size);
         return elementData(index);
@@ -97,7 +97,7 @@ public class ArrayList<E> extends AbstractList<E>
 ```
 
 ## set
-```
+```java
     public E set(int index, E element) {
         Objects.checkIndex(index, size);
         E oldValue = elementData(index);
@@ -107,7 +107,7 @@ public class ArrayList<E> extends AbstractList<E>
 ```
 ## remove
 `remove`方法调用了`fastRemove`方法。
-```
+```java
     public E remove(int index) {
         Objects.checkIndex(index, size);
         final Object[] es = elementData;
@@ -118,7 +118,7 @@ public class ArrayList<E> extends AbstractList<E>
         return oldValue;
     }
 ```
-```
+```java
     private void fastRemove(Object[] es, int i) {
         modCount++;
         final int newSize;
@@ -135,18 +135,18 @@ public class ArrayList<E> extends AbstractList<E>
 3. `addAll(Collection<? extends E> c)`和`addAll(int index, Collection<? extends E> c)`。  
   
 扩容
-```
+```java
     private Object[] grow() {
         return grow(size + 1);
     }
 ```
-```
+```java
     private Object[] grow(int minCapacity) {
         return elementData = Arrays.copyOf(elementData, newCapacity(minCapacity));
     }
 ```
 主要是`newCapacity(minCapacity)`如何计算新的容量，根据初始化为elementData赋值不同，扩容后的容量会不同
-```
+```java
     private int newCapacity(int minCapacity) {
         // overflow-conscious code
         //数组原来的容量
@@ -177,20 +177,20 @@ public class ArrayList<E> extends AbstractList<E>
 ```
 ## 迭代器
 `ArrayList`提供了`iterator()`和`listIterator()`，都是`ArrayList`的内部类。
-```
+```java
     private class Itr implements Iterator<E>
 ```
-```
+```java
 private class ListItr extends Itr implements ListIterator<E>
 ```
 `Iterator`接口有三个主要方法，在迭代过程中要删除元素智能调用迭代器的`remove`方法，否则会抛出异常。
-```
+```java
 boolean hasNext()
 E next()
 void remove()
 ```
 `ListIterator`扩展了`Iterator`类，提供了向前向后迭代的方法，并且能够在当前位置增加元素或者修改当前元素。
-```
+```java
 boolean hasPrevious()
 int nextIndex()
 int previousIndex()
@@ -206,7 +206,7 @@ void add(E)
 数组赋值时大量调用了`Arrays.copyOf`和`System.arraycopy`两个方法。`Arrays.copyOf`重载了很多方法，最终调用的都是本地调用`System.arraycopy`。
 ### System.arraycopy
 复制的长度为`length`，从源数组`src`的`srcPos`开始复制，复制到`dest`的`destPos`。
-```
+```java
     public static native void arraycopy(Object src,  int  srcPos,
                                         Object dest, int destPos,
                                         int length);
@@ -222,7 +222,7 @@ void add(E)
     }
 ```
 支持基本类型和泛型。对基本类型的支持
-```
+```java
 copyOf(byte[], int)
 copyOf(short[], int)
 copyOf(int[], int)
@@ -233,13 +233,13 @@ copyOf(double[], int)
 copyOf(boolean[], int)
 ```
 对泛型的支持
-```
+```java
     @SuppressWarnings("unchecked")
     public static <T> T[] copyOf(T[] original, int newLength) {
         return (T[]) copyOf(original, newLength, original.getClass());
     }
 ```
-```
+```java
     public static <T,U> T[] copyOf(U[] original, int newLength, Class<? extends T[]> newType) {
         @SuppressWarnings("unchecked")
         T[] copy = ((Object)newType == (Object)Object[].class)
@@ -251,7 +251,7 @@ copyOf(boolean[], int)
     }
 ```
 只复制一段数组
-```
+```java
 copyOfRange(T[], int, int)
 copyOfRange(U[], int, int, Class<? extends T[]>)
 copyOfRange(byte[], int, int)
