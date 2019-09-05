@@ -209,18 +209,63 @@ putVal要做几件事情：
         }
     }
 ```
-**问题2 modCount的修改**
+**问题2 modCount的修改**  
 modCount在修改了key-value的个数或者rehash才会加1。如果能够查找到key，那么肯定没有增加key-value的个数，不需要修改。table[i]为null或者key不存在，才需要修改。
 
-**问题3 什么时候resize**
+**问题3 什么时候resize**  
 有三个地方会resize。resize不会增加modCount。
 1. 初始化table调用了resize。
 2. 调用treeifyBin时，有可能会resize。
 3. 插入key-value后，size加1，如果比threshold大，会resize。
 
-## remove
-与put类似，调用removeNode删除key-value。同样，该方法返回原先的value，返回null也无法判断原先是否存在该key-value。
-removeNode根据key和hash查找node的位置，只有key存在时才会删除。
+## remove  
+与put类似，调用removeNode删除key-value。同样，该方法返回原先的value，返回null也无法判断原先是否存在该key-value。  
+removeNode根据key和hash查找node的位置，只有key存在时才会删除。如果删除了key-value，则对key-value个数做了修改，需要修改modCount。binCount过少会unTreeifyBin。  
+```java
+    final Node<K,V> removeNode(int hash, Object key, Object value,
+                               boolean matchValue, boolean movable) {
+        Node<K,V>[] tab; Node<K,V> p; int n, index;
+        if ((tab = table) != null && (n = tab.length) > 0 &&
+            (p = tab[index = (n - 1) & hash]) != null) {
+            Node<K,V> node = null, e; K k; V v;
+            if (p.hash == hash &&
+                ((k = p.key) == key || (key != null && key.equals(k))))
+                node = p;
+            else if ((e = p.next) != null) {
+                if (p instanceof TreeNode)
+                    node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
+                else {
+                    do {
+                        if (e.hash == hash &&
+                            ((k = e.key) == key ||
+                             (key != null && key.equals(k)))) {
+                            node = e;
+                            break;
+                        }
+                        p = e;
+                    } while ((e = e.next) != null);
+                }
+            }
+			//如果查找到了key，则开始删除，分链表删除和树删除
+            if (node != null && (!matchValue || (v = node.value) == value ||
+                                 (value != null && value.equals(v)))) {
+                if (node instanceof TreeNode)
+                    ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
+                else if (node == p)
+                    tab[index] = node.next;
+                else
+                    p.next = node.next;
+                ++modCount;
+                --size;
+                afterNodeRemoval(node);
+                return node;
+            }
+        }
+        return null;
+    }
+```
+**问题 什么时候树转化为链表**  
+如果是树节点，调用`((TreeNode<K,V>)node).removeTreeNode(this, tab, movable)`删除该节点。这里的转化和`UNTREEIFY_THRESHOLD`无关。
 
 ## 扩容
 
