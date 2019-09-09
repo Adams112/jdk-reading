@@ -96,6 +96,10 @@ AQS队列是FIFO的，保证了一定的公平性。在共享锁中，如果当�
 ReentransLock和ReentrantReadWriteLock都是通过AQS实现的。要实现一种锁的逻辑，需要实现tryAcquire和tryRelease两个方法。 
 
 ## ReentrantLock
+实现了公平锁和非公平锁，需要实现tryAcquire和tryRelease。核心内容就是要支持重入，和是否允许插队，释放锁的逻辑都一样。  
+**获取锁**  
+公平锁：实际上就是不允许tryAcquire时插队。在tryAcquire时，会检查队列是否为空，为空的话，才会直接获取，否则会入队。  
+如何支持重入？就是获取锁的时候，判断下当前线程和拥有锁的线程是不是同一个。
 
 ## ReentrantReadWriteLock
 
